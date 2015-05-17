@@ -21,7 +21,7 @@ def run(doc_id, words):
     if 'stopwords' in SD:
         stopwords = SD['stopwords']
     else:
-        stopwords = [line.strip() for line in open('/lfs/local/1/raphaelh/stanford-memex/dicts/common_words.tsv')]
+        stopwords = [line.strip() for line in open('/dd/dd-benchmark/dicts/common_words.tsv')]
         SD['stopwords'] = stopwords
 
     import sys

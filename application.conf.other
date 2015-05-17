@@ -1,0 +1,109 @@
+deepdive {
+
+  sampler.sampler_args: "-l 300 -s 1 -i 500 --alpha 0.1 -c 0"
+
+  schema.variables {
+    rates.is_correct: Boolean
+  }
+
+  pipeline.run: rates 
+
+  pipeline.pipelines {
+    debug = [ rates_features ]
+    rates = [ extract_rates, rates_unsuper_copies, rates_features ]
+  }
+
+  db.default {
+    driver   : "org.postgresql.Driver"
+    url      : "jdbc:postgresql://"${PGHOST}":"${PGPORT}"/"${DBNAME}
+    user     : ${PGUSER}
+    password : ${PGPASSWORD}
+    dbname   : ${DBNAME}
+    host     : ${PGHOST}
+    port     : ${PGPORT}
+    gphost   : ${GPHOST}
+    gpport   : ${GPPORT}
+    gppath   : ${GPPATH}
+    # start gpfdist server on the machine running the application with
+    # `rungpcommand 'gpfdist -d /lfs/raiders4/0/rionda/greenplum_gpfdist-memex -p 9999'`
+  }
+
+  # Parallel grounding
+#  inference.parallel_grounding: true # COMMENT OUT unless you set up GP
+  # Specify a holdout fraction
+   calibration.holdout_fraction: 0.075
+
+  # calibration.holdout_fraction: 0.1
+
+  #calibration: {
+  #  holdout_query: """
+  #    INSERT INTO dd_graph_variables_holdout(variable_id)
+  #  	select t0.id from names t0, sentences_ads_heldout t1
+  #  	where t0.doc_id=t1.doc_id
+  #  	UNION
+  #  	select t0.id from locations t0, sentences_ads_heldout t1
+  #  	where t0.doc_id=t1.doc_id;
+  #    """
+  #}
+
+  # Put your extractors here
+  extraction.extractors {
+
+    extract_rates: {
+        style: tsv_extractor
+        before: psql -d ${DBNAME} -f ${APP_HOME}/schemas/rates.sql
+        input: """
+                SELECT
+                        doc_id,
+                        sent_id,
+                        array_to_string(words, '|^|'),
+                        array_to_string(poses, '|^|'),
+                        array_to_string(ners, '|^|'),
+                        array_to_string(lemmas, '|^|'),
+                        array_to_string(dep_paths, '|^|'),
+                        array_to_string(dep_parents, '|^|')
+                FROM sentences_escort;
+                """
+        output_relation: rates
+        udf: ${APP_HOME}/udf/extract_rates.py
+    # udf: util/extractor_input_writer.py relations.tsv
+# FROM sentences_ads where doc_id = '20131.toproc.txt.nlp' or doc_id = '72715.toproc.txt.nlp' or doc_id = '80670.toproc.txt.nlp' or doc_id = '5712.toproc.txt.nlp';
+        #input_batch_size: ${SENTENCES_BATCH_SIZE}
+        input_batch_size: 6000
+        parallelism: ${PARALLELISM}
+    }
+
+    rates_unsuper_copies: {
+        style: sql_extractor
+        sql: """
+            INSERT INTO rates(doc_id, sent_id, wordidxs, mention_id, type,
+            entity, words, is_correct, features) SELECT DISTINCT doc_id,
+            sent_id, wordidxs, mention_id || '_unsup', type, entity, words,
+            NULL::boolean, features FROM rates where is_correct IS NOT NULL
+            """
+        dependencies: [extract_rates]
+    }
+  }
+  
+  # Put your inference rules here
+  inference.factors {
+
+    rates_features {
+      input_query = """
+        SELECT "rates.id", "rates.is_correct", nt.feature
+        FROM (
+          SELECT t0.id as "rates.id",
+                 t0.is_correct as "rates.is_correct" ,
+                 unnest(t0.features) as feature
+          FROM rates t0) nt
+          WHERE feature like '%_GRAM_%';
+      """
+  ##   WHERE feature not like 'SINGLE_%' and feature not like 'SUFFIX_%' and feature != 'LENGTH_2'
+
+      function: IsTrue(rates.is_correct)
+      weight: "?(feature)"
+    }
+
+  }
+}
+
