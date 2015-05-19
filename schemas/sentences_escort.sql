@@ -11,4 +11,4 @@ CREATE TABLE sentences_escort (
         offsets int[],
 	dep_paths text[],
 	dep_parents int[]
-) DISTRIBUTED BY (doc_id);
+) DISTRIBUTE BY HASH (doc_id);
