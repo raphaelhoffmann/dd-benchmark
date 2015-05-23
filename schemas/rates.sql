@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS rates CASCADE;
-CREATE TABLE rates (
+CREATE UNLOGGED TABLE rates (
     -- id for random variable
     id bigint,
     -- document id

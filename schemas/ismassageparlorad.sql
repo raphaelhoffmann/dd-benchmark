@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS ismassageparlorad CASCADE;
-CREATE TABLE ismassageparlorad (
+CREATE UNLOGGED TABLE ismassageparlorad (
     id bigint,
     doc_id text,
     is_true boolean,

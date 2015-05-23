@@ -1,6 +1,6 @@
 -- Sentences table
 DROP TABLE IF EXISTS sentences_escort CASCADE;
-CREATE TABLE sentences_escort (
+CREATE UNLOGGED TABLE sentences_escort (
 	doc_id text,
 	sent_id int,
 	text text,
