@@ -4,4 +4,4 @@ CREATE UNLOGGED TABLE ismassageparlorad (
     doc_id text,
     is_true boolean,
     features text[]
-) DISTRIBUTED BY (doc_id); 
+) DISTRIBUTE BY HASH (doc_id); 

@@ -20,4 +20,4 @@ CREATE UNLOGGED TABLE rates (
     is_correct boolean,
     -- features for training
     features text[]
-) DISTRIBUTED BY (mention_id);
+) DISTRIBUTE BY HASH (mention_id);

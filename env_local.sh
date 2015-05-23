@@ -1,13 +1,13 @@
-export DEEPDIVE_HOME=/lfs/local/0/raphaelh/deepdive
+export DEEPDIVE_HOME=$HOME/deepdive
 export APP_HOME=`pwd`
 export MEMORY="8g"
 export PARALLELISM=8
 export DBNAME="bench"
-export PGHOST="localhost"
+export PGHOST="127.0.0.1"
 export PGPORT="6432"
 export PGUSER="$USER"
 export PGPASSWORD=""
 export GPHOST=$PGHOST
 export GPPORT=$PGPORT
 export GPPATH=""
-export TMP_DIR="/lfs/local/1/raphaelh/tmp"
+export TMP_DIR="$HOME/tmp"
